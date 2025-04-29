@@ -1,0 +1,1 @@
+podman run -d   --name mysql-container   -e MYSQL_ROOT_PASSWORD=ABC-XXX-123   -e MYSQL_DATABASE=testdb  -e MYSQL_USER=mysql_user -e MYSQL_PASSWORD=mysql_password -p 3306:3306 mysql:8.0

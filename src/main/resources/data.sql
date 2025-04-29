@@ -1,0 +1,10 @@
+INSERT INTO test_data (txt_col, dt_col) VALUES ('Record 1', NOW());
+INSERT INTO test_data (txt_col, dt_col) VALUES ('Record 2', NOW());
+INSERT INTO test_data (txt_col, dt_col) VALUES ('Record 3', NOW());
+INSERT INTO test_data (txt_col, dt_col) VALUES ('Record 4', NOW());
+INSERT INTO test_data (txt_col, dt_col) VALUES ('Record 5', NOW());
+INSERT INTO test_data (txt_col, dt_col) VALUES ('Record 6', NOW());
+INSERT INTO test_data (txt_col, dt_col) VALUES ('Record 7', NOW());
+INSERT INTO test_data (txt_col, dt_col) VALUES ('Record 8', NOW());
+INSERT INTO test_data (txt_col, dt_col) VALUES ('Record 9', NOW());
+INSERT INTO test_data (txt_col, dt_col) VALUES ('Record 10', NOW());
