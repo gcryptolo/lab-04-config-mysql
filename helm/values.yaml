@@ -1,0 +1,19 @@
+replicaCount: 1
+
+image:
+  repository: default-route-openshift-image-registry.apps.rm1.0a51.p1.openshiftapps.com/giovanni-manzone-dev/lab-04-config-mysql
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+route:
+  enabled: true
+  host: "lab-04-config-mysql-giovanni-manzone-dev.apps.rm1.0a51.p1.openshiftapps.com"
+
+env:
+  DB_USER: "mysql_user"
+  DB_PASSWORD: "mysql_password"
+  DB_URL: "jdbc:mysql://mysql-container:3306/testdb"
