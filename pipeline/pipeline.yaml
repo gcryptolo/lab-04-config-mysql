@@ -65,42 +65,20 @@ spec:
           workspace: shared-workspace
       runAfter:
         - maven-build
-
-    - name: update-values
-      taskSpec:
-        steps:
-          - name: update-image-tag
-            image: registry.access.redhat.com/ubi9/ubi-micro
-            script: |
-              #!/bin/bash
-              set -e
-              sed -i "s|image:.*|image: $(params.image-name):$(params.image-tag)|" $(workspaces.source.path)/helm/values.yaml
-            workingDir: $(workspaces.source.path)
+    - name: helm-release
+      taskRef:
+        name: helm-upgrade-from-source
       params:
-        - name: image-name
-          value: $(params.image-name)
-        - name: image-tag
-          value: $(params.image-tag)
+        - name: release_version
+          value: $(params.helm-release)
+        - name: charts_dir
+          value: $(params.helm-chart-path)
+        - name: release_namespace
+          value: $(params.namespace)
+        - name: overwrite_values
+          value: image= $(params.image-name):${params.image-tag}
       workspaces:
         - name: source
           workspace: shared-workspace
       runAfter:
         - docker-build-and-push
-    - name: helm-release
-      taskRef:
-        name: helm-upgrade-from-source
-      params:
-        - name: helmRelease
-          value: $(params.helm-release)
-        - name: helmChart
-          value: $(params.helm-chart-path)
-        - name: namespace
-          value: $(params.namespace)
-        - name: values
-          value: |
-            image: $(params.image-name):${params.image-tag}
-      workspaces:
-        - name: source
-          workspace: shared-workspace
-      runAfter:
-        - update-values
