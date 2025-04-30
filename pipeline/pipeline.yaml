@@ -23,6 +23,7 @@ spec:
     - name: shared-workspace
     - name: maven-settings
     - name: maven-local-repo
+    - name: dockerconfig
   tasks:
     - name: fetch-repository
       taskRef:
@@ -71,6 +72,8 @@ spec:
       workspaces:
         - name: source
           workspace: shared-workspace
+        - name: dockerconfig
+          workspace: dockerconfig
       runAfter:
         - maven-build
     - name: helm-release
