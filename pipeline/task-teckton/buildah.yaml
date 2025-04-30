@@ -77,6 +77,8 @@ spec:
       image: $(params.BUILDER_IMAGE)
       workingDir: $(workspaces.source.path)
       env:
+        - name: HOME
+          value: /tekton/home
         - name: PARAM_IMAGE
           value: $(params.IMAGE)
         - name: PARAM_STORAGE_DRIVER
@@ -121,9 +123,13 @@ spec:
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers
+        - name: tekton-home
+          mountPath: /tekton/home
       securityContext:
         runAsUser: 1005520000
         runAsGroup: 1005520000
   volumes:
     - name: varlibcontainers
+      emptyDir: {}
+    - name: tekton-home
       emptyDir: {}
