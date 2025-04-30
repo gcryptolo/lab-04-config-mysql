@@ -65,7 +65,7 @@ spec:
         - name: IMAGE
           value: $(params.image-name):$(params.image-tag)
         - name: CONTEXT
-          value: $(workspaces.shared-workspace.path)
+          value: /workspace/source
         - name: TLSVERIFY
           value: "false"
       workspaces:
