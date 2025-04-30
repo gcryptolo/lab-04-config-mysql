@@ -38,3 +38,6 @@ spec:
           - name: shared-workspace
             persistentVolumeClaim:
               claimName: shared-pvc
+          - name: maven-settings-workspace
+            secret:
+              secretName: maven-settings-cfg

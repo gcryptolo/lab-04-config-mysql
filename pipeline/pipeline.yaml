@@ -21,6 +21,7 @@ spec:
       default: giovanni-manzone-dev
   workspaces:
     - name: shared-workspace
+    - name: maven-settings-workspace
   tasks:
     - name: fetch-repository
       taskRef:
@@ -44,9 +45,15 @@ spec:
             - package
         - name: MAVEN_IMAGE
           value: image-registry.openshift-image-registry.svc:5000/openshift/ubi8-openjdk-21:1.18
+        - name: MAVEN_SETTINGS
+          value: /workspace/maven-settings/settings.xml
       workspaces:
         - name: source
           workspace: shared-workspace
+      volumeMounts:
+        - name: maven-settings
+          mountPath: /workspace/maven-settings
+          readOnly: true
       runAfter:
         - fetch-repository
 
