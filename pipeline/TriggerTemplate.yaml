@@ -31,9 +31,9 @@ spec:
           name: lab-04-pipeline
         params:
           - name: repo-url
-            value: $(params.repo-url)
+            value: $(tt.params.repo-url)
           - name: revision
-            value: $(params.revision)
+            value: $(tt.params.revision)
         workspaces:
           - name: shared-workspace
             persistentVolumeClaim:
