@@ -1,0 +1,104 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: lab-04-pipeline
+  namespace: <your-namespace>
+spec:
+  params:
+    - name: repo-url
+      description: The URL of the Git repository
+    - name: revision
+      description: The Git revision to check out
+    - name: image-name
+      default: image-registry.openshift-image-registry.svc:5000/giovanni-manzone-dev/lab-04-config-mysql
+    - name: image-tag
+      default: latest
+    - name: helm-release
+      default: app-release
+    - name: helm-chart-path
+      default: ./helm
+    - name: namespace
+      default: giovanni-manzone-dev
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.revision)
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+
+    - name: maven-build
+      taskRef:
+        name: maven
+      params:
+        - name: GOALS
+          value: clean package
+        - name: MAVEN_IMAGE
+          value: image-registry.openshift-image-registry.svc:5000/openshift/ubi8-openjdk-21:1.18
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      runAfter:
+        - fetch-repository
+
+    - name: docker-build-and-push
+      taskRef:
+        name: buildah
+      params:
+        - name: IMAGE
+          value: $(params.image-name):$(params.image-tag)
+        - name: CONTEXT
+          value: $(workspaces.shared-workspace.path)
+        - name: TLSVERIFY
+          value: "false"
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      runAfter:
+        - maven-build
+
+    - name: update-values
+      taskSpec:
+        steps:
+          - name: update-image-tag
+            image: registry.access.redhat.com/ubi9/ubi-micro
+            script: |
+              #!/bin/bash
+              set -e
+              sed -i "s|image:.*|image: $(params.image-name):$(params.image-tag)|" $(workspaces.source.path)/helm/values.yaml
+            workingDir: $(workspaces.source.path)
+      params:
+        - name: image-name
+          value: $(params.image-name)
+        - name: image-tag
+          value: $(params.image-tag)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      runAfter:
+        - docker-build-and-push
+    - name: helm-release
+      taskRef:
+        name: helm-upgrade-from-source
+      params:
+        - name: helmRelease
+          value: $(params.helm-release)
+        - name: helmChart
+          value: $(params.helm-chart-path)
+        - name: namespace
+          value: $(params.namespace)
+        - name: values
+          value: |
+            image: $(params.image-name):${re}
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      runAfter:
+        - update-values        -

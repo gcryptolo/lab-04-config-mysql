@@ -24,12 +24,14 @@ LAB-04 Deploy Java APP with DB connection provided by config
 2. Create a new repo on your GitHub account
 3. Copy the content of cloned project into your repo and push the code to origin (also local test)
 4. Create mysql deployment using oc cli
-5. Create DockerFile and Helm chart for our application
-6. Use ConfigMap and Secret to define connection parameter for the app
+5. Create DockerFile  
+6. Create Helm chart for our application
 7. Create Openshift pipeline to deploy our application
 8. Configure Webhook to trigger pipeline on push
 9. Test the pipeline
 10. Test the application
+11. Use ConfigMap and Secret to define connection parameter for the app
+12. Test the application with ConfigMap and Secret
 
 ## 1. Clone Project
 ```bash
@@ -108,9 +110,7 @@ This command will create a new deployment with the name mysql-container and set 
 
 ![img_1.png](doc%2Fimg%2Fimg_1.png)
 
-## 5. Create DockerFile and Helm chart for our application
-
-### DockerFile
+## 5. Create DockerFile 
 
 Remember change image repository to your image registry, you can find it in ImageStream tab of the consolle or typing:
 
@@ -128,7 +128,7 @@ COPY target/lab-04-config-mysql-0.0.1-SNAPSHOT.jar /app.jar
 ENTRYPOINT ["java", "-jar", "/app.jar"]
 ```
 
-### Helm Chart
+## Create  Helm Chart
 
 The helm chart is already created for you, you can find it in the helm directory.
 
@@ -143,3 +143,288 @@ helm/
     ├── service.yaml
     ├── route.yaml
 ```
+
+Helm is a package manager for Kubernetes that allows you to define, install, and manage Kubernetes applications. It uses a packaging format called charts, which are collections of files that describe a related set of Kubernetes resources.
+
+The template directory contains YAML template you can populate with values from the values.yaml file. (check helm sintax to understand how to use it).
+The Chart.yaml file contains metadata about the chart, such as its name, version, and description. The values.yaml file contains default values for the templates in the chart. You can override these values when you install the chart by providing your own values file or using command-line flags.
+The values.yaml file is already populated with the connection parameters for the mysql DB, you can change them if you want.
+You need to change the image repository in the deployment.yaml file to your image registry.
+
+
+PS you can create the helm chart using the command:
+
+```bash
+helm create <your_chart_name>
+```
+it creates a directory with the same structure as above, you can then modify the files to fit your needs.
+
+## 6. Create Openshift pipeline to deploy our application
+
+Now its time to create the Openshift pipeline to deploy our application, you can find the pipeline in the pipeline directory.
+
+Openshift offer a tekton technology to create and run pipelines, a pipeline is a set of task that are executed in order to build, test and deploy your application.
+Every Task work on a shared workspace, so you can pass data from one task to another.
+
+
+We have to understand the logic flow started from GIT Webhook to final deployment of our application and how all components work together.
+
+
+
+***1- EventListener***
+
+The EventListener is a Tekton resource that listens for events from a webhook and triggers a pipeline run when an event is received. 
+
+
+```bash
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: lab-04-webhook-listener
+  namespace: <your_name_space>>
+spec:
+  serviceAccountName: pipeline
+  triggers:
+    - name: git-trigger
+      interceptors:
+        - ref:
+            name: "github"
+          params:
+            - name: "eventTypes"
+              value:
+                - "push"
+      bindings:
+        - ref: lab-04-trigger-binding
+      template:
+        ref: lab-04-trigger-template
+```
+
+Remember to change the name space to your name space, you can find it in the top right corner of the console.
+
+The EventListener defines two ref :
+1. bindings
+2. template
+
+Those are references to the TriggerBinding and TriggerTemplate resources that define the parameters to be passed to the pipeline run and the template for the pipeline run.
+
+
+
+
+***2- TriggerTemplate***
+
+The TriggerTemplate is a Tekton resource that defines the template for the pipeline run. It specifies the pipeline to be run and the parameters to be passed to the pipeline.
+
+```bash
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shared-pvc
+  namespace: <your-namespace>
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: lab-04-trigger-template
+  namespace: <your-namespace>
+spec:
+  params:
+    - name: repo-url
+    - name: revision
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: lab-04-pipeline-run-
+      spec:
+        pipelineRef:
+          name: lab-04-pipeline
+        params:
+          - name: repo-url
+            value: $(params.repo-url)
+          - name: revision
+            value: $(params.revision)
+        workspaces:
+          - name: shared-workspace
+            persistentVolumeClaim:
+              claimName: shared-pvc
+```
+
+In this YAML we create first a PVC for operation of the pipeline, this is a shared volume that can be used by all tasks in the pipeline. 
+Then we define the TriggerTemplate that will be used to create the PipelineRun when an event is received. The TriggerTemplate defines the parameters to be passed to the pipeline run and the template for the pipeline run.
+
+
+***3- TriggerBinding***
+
+The TriggerBinding is a Tekton resource that defines the mapping between the event payload and the parameters to be passed to the pipeline run. It specifies how to extract the parameters from the event payload.
+
+```bash
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: lab-04-trigger-binding
+  namespace: <your-namespace>
+spec:
+  params:
+    - name: repo-url
+      value: $(body.repository.clone_url)
+    - name: revision
+      value: $(body.ref)
+```
+
+The TriggerBinding defines the parameters to be passed to the pipeline run and how to extract them from the event payload. In this case, we are extracting the repository URL and the revision from the event payload.
+
+
+4- Pipeline
+The Pipeline is a Tekton resource that defines the steps to be executed in the pipeline run. It specifies the tasks to be executed and the order in which they are executed.
+
+```bash
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: lab-04-pipeline
+  namespace: <your-namespace>
+spec:
+  params:
+    - name: repo-url
+      description: The URL of the Git repository
+    - name: revision
+      description: The Git revision to check out
+    - name: image-name
+      default: image-registry.openshift-image-registry.svc:5000/giovanni-manzone-dev/lab-04-config-mysql:1.0.0
+    - name: helm-release
+      default: app-release
+    - name: helm-chart-path
+      default: ./helm
+    - name: namespace
+      default: giovanni-manzone-dev
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.revision)
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+
+    - name: maven-build
+      taskRef:
+        name: maven
+      params:
+        - name: GOALS
+          value: clean package
+        - name: MAVEN_IMAGE
+          value: image-registry.openshift-image-registry.svc:5000/openshift/ubi8-openjdk-21:1.18
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      runAfter:
+        - fetch-repository
+
+    - name: docker-build-and-push
+      taskRef:
+        name: buildah
+      params:
+        - name: IMAGE
+          value: $(params.image-name)
+        - name: CONTEXT
+          value: $(workspaces.shared-workspace.path)
+        - name: TLSVERIFY
+          value: "false"
+      results:
+        - name: built-image
+          description: The name of the built image
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      runAfter:
+        - maven-build
+
+    - name: update-values
+      taskSpec:
+        steps:
+            - name: update-image-tag
+              image: registry.access.redhat.com/ubi9/ubi-micro
+              script: |
+                #!/bin/bash
+                set -e
+                sed -i "s|image:.*|image: $(params.image-name)|" $(workspaces.source.path)/helm/values.yaml
+              workingDir: $(workspaces.source.path)
+      params:
+        - name: image-name
+          value: $(params.image-name)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      runAfter:
+        - docker-build-and-push
+    - name: helm-release
+      taskRef:
+        name: helm-upgrade-from-source
+      params:
+        - name: helmRelease
+          value: $(params.helm-release)
+        - name: helmChart
+          value: $(params.helm-chart-path)
+        - name: namespace
+          value: $(params.namespace)
+        - name: values
+          value: |
+            image: $(params.image-name)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      runAfter:
+        - update-values        -
+        
+```
+
+NB  - Task
+The Task is a Tekton resource that defines the steps to be executed in the task. 
+It specifies the commands to be executed and the parameters to be passed to the commands,
+in this example we define one task to update the value of the image created in docker-build-and-push task. 
+You can feate a simple Resource Task and after refer it in the pipeline as the other task in the pipeline. Those task are predefined in Openshift and you can find them in the
+Openshift documentation [Tekton Tasks](https://docs.openshift.com/container-platform/4.12/cicd/pipelines/tekton-tasks.html).
+
+
+
+
+
+
+
+##################################################################################
+
+Now we will create a pipeline from console:
+
+***Create repository***
+
+From console in pipeline menu select Create and select Repository:
+
+![img_3.png](doc%2Fimg%2Fimg_3.png)
+
+
+
+add Git info to your repository:
+
+![img_4.png](doc%2Fimg%2Fimg_4.png)
+
+now we can see the repo added and the following screen message:
+
+![img_5.png](doc%2Fimg%2Fimg_5.png)
+
+Now openshift is telling us if we put a fila called push.yaml into repo it will create a pipeline for us, so lets create this file and push it to origin.
+
+I'll show you how
