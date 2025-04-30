@@ -438,6 +438,8 @@ Now we havo to configure the webhook to trigger the pipeline on push, go to your
 
 
 
+oc adm policy add-scc-to-user restricted-v2 -z pipeline -n giovanni-manzone-dev
+
 
 
 ##################################################################################

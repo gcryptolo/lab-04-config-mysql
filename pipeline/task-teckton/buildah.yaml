@@ -122,12 +122,8 @@ spec:
         - name: varlibcontainers
           mountPath: /var/lib/containers
       securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        capabilities:
-          add:
-            - CAP_SETGID
-            - CAP_SETUID
+        runAsUser: 1005520000
+        runAsGroup: 1005520000
   volumes:
     - name: varlibcontainers
       emptyDir: {}
