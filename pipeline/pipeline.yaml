@@ -96,9 +96,9 @@ spec:
           value: $(params.namespace)
         - name: values
           value: |
-            image: $(params.image-name):${re}
+            image: $(params.image-name):${params.image-tag}
       workspaces:
         - name: source
           workspace: shared-workspace
       runAfter:
-        - update-values        -
+        - update-values

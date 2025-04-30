@@ -169,6 +169,9 @@ Every Task work on a shared workspace, so you can pass data from one task to ano
 
 We have to understand the logic flow started from GIT Webhook to final deployment of our application and how all components work together.
 
+To create all this resource we can use the add button at the top right corner of the console and select the resource we want to create, select import YAML and copy the YAML code in the file you want to create.
+
+
 
 
 ***1- EventListener***
@@ -400,6 +403,37 @@ You can feate a simple Resource Task and after refer it in the pipeline as the o
 Openshift documentation [Tekton Tasks](https://docs.openshift.com/container-platform/4.12/cicd/pipelines/tekton-tasks.html).
 
 
+
+
+
+Lets esplore whats Openshift create for us:
+
+When we create the EventListener it creates a service:
+
+![img_6.png](doc%2Fimg%2Fimg_6.png)
+
+This service is used to expose the EventListener to the outside world.
+
+to access the EventListener from outside Openshift (Git Webhook) we have to expose this service with a route:
+
+```bash
+oc expose service el-lab-04-event-listener --port=8080 --name=lab-04-webhook-listener
+```
+check the route created:
+
+![img_7.png](doc%2Fimg%2Fimg_7.png)
+
+
+retrive the URL of the route from console or typing:
+
+```bash
+oc get route lab-04-webhook-listener -o jsonpath='{.spec.host}'
+```
+
+
+### 8. Configure Webhook to trigger pipeline on push
+
+Now we havo to configure the webhook to trigger the pipeline on push, go to your GitHub repo and select Settings -> Webhooks -> Add webhook.
 
 
 
