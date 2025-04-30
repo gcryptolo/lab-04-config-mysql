@@ -124,6 +124,10 @@ spec:
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
+        capabilities:
+          add:
+            - CAP_SETGID
+            - CAP_SETUID
   volumes:
     - name: varlibcontainers
       emptyDir: {}
