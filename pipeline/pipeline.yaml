@@ -21,7 +21,7 @@ spec:
       default: giovanni-manzone-dev
   workspaces:
     - name: shared-workspace
-    - name: maven-settings-workspace
+    - name: maven-settings
   tasks:
     - name: fetch-repository
       taskRef:
@@ -50,10 +50,8 @@ spec:
       workspaces:
         - name: source
           workspace: shared-workspace
-      volumeMounts:
         - name: maven-settings
-          mountPath: /workspace/maven-settings
-          readOnly: true
+          workspace: maven-settings
       runAfter:
         - fetch-repository
 
