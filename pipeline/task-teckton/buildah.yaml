@@ -100,6 +100,14 @@ spec:
       args:
         - $(params.BUILD_ARGS[*])
       script: |
+        echo "start chaeking the buildah image"
+        
+        pwd
+        
+        ls -l
+        
+        ls -l ./config.json
+        
         BUILD_ARGS=()
         for buildarg in "$@"
         do
