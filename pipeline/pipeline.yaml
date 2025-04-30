@@ -39,7 +39,9 @@ spec:
         name: maven
       params:
         - name: GOALS
-          value: clean package
+          value:
+            - clean
+            - package
         - name: MAVEN_IMAGE
           value: image-registry.openshift-image-registry.svc:5000/openshift/ubi8-openjdk-21:1.18
       workspaces:
