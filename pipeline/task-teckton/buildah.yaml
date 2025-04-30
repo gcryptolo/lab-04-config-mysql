@@ -26,7 +26,7 @@ spec:
       description: Reference of the image buildah will produce.
     - name: BUILDER_IMAGE
       description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1
+      default: registry.access.redhat.com/ubi8/buildah:latest
     - name: STORAGE_DRIVER
       description: Set buildah storage driver
       default: overlay
