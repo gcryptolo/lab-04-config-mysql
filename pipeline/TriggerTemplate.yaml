@@ -41,3 +41,5 @@ spec:
           - name: maven-settings
             secret:
               secretName: maven-settings-cfg
+          - name: maven-local-repo
+            emptyDir: {}

@@ -22,6 +22,7 @@ spec:
   workspaces:
     - name: shared-workspace
     - name: maven-settings
+    - name: maven-local-repo
   tasks:
     - name: fetch-repository
       taskRef:
@@ -52,6 +53,8 @@ spec:
           workspace: shared-workspace
         - name: maven-settings
           workspace: maven-settings
+        - name: maven-local-repo
+          workspace: maven-local-repo
       runAfter:
         - fetch-repository
 
