@@ -440,6 +440,8 @@ Now we havo to configure the webhook to trigger the pipeline on push, go to your
 
 oc adm policy add-scc-to-user restricted-v2 -z pipeline -n giovanni-manzone-dev
 
+oc policy add-role-to-user system:image-builder system:serviceaccount:giovanni-manzone-dev:default -n giovanni-manzone-dev
+
 
 
 ##################################################################################
