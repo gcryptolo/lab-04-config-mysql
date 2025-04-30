@@ -134,8 +134,8 @@ spec:
         - name: tekton-home
           mountPath: /tekton/home
       securityContext:
-        runAsUser: 1005520000
-        runAsGroup: 1005520000
+        runAsUser: 100000
+        runAsGroup: 100000
   volumes:
     - name: varlibcontainers
       emptyDir: {}
