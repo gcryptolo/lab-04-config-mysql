@@ -442,6 +442,11 @@ oc adm policy add-scc-to-user restricted-v2 -z pipeline -n giovanni-manzone-dev
 
 oc policy add-role-to-user system:image-builder system:serviceaccount:giovanni-manzone-dev:default -n giovanni-manzone-dev
 
+oc create secret docker-registry my-docker-config --docker-server=image-registry.openshift-image-registry.svc:5000   --docker-username=giovanni-manzone --docker-password=sha256~6DlVg7XmKQJCiIzxz8b2ZgCau0OZoOd92YYil4a0uUM --docker-email=giovanni.manzone@eng.it -n giovanni-manzone-dev
+
+oc whoami
+oc whoami -t
+
 
 
 ##################################################################################
