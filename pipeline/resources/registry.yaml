@@ -1,0 +1,9 @@
+image-registry.openshift-image-registry.svc:5000:
+  .*:
+    security:
+      tls:
+        client:
+          disabled: false
+      basic:
+        username: "giovanni-manzone"
+        password: "sha256~HTbdVZyfGRqJs-SQd4_spHqIOPFUbqiJiOGIZl6cE5Q"
